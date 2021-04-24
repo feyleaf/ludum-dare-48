@@ -1,8 +1,8 @@
 /*
 globals.h
 ============================================
-Druid vs. Alchemist: Redux v0.3.1
-December 2, 2020
+Ludum Dare 48
+April 23, 2020
 Author: Benjamin C. Watt (feyleafgames.com)
 ============================================
 */
