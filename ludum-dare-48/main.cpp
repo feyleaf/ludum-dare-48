@@ -31,6 +31,10 @@ int main()
 	sf::Keyboard keys;
 	sf::Clock game_clock;
 	game_clock.restart();
+	sf::Clock animateClock;
+	animateClock.restart();
+	bool flip = false;
+	unsigned int animOffset = 0;
 	sf::Vector2f mouse_pointer;
 	mouse_pointer = sf::Vector2f(0, 0);
 	
@@ -45,6 +49,7 @@ int main()
 
 	_tex.setSmooth(false);
 	sf::Sprite _sprite;
+	_sprite.setOrigin(128.0f, 128.0f);
 	_sprite.setTexture(_tex);
 	_sprite.setColor(sf::Color::White);
 	sf::Vector2f spr_pos= {460.0f, 260.0f};
@@ -73,16 +78,17 @@ int main()
 		if (game_clock.getElapsedTime().asSeconds() > 0.0125f)
 		{
 			game_clock.restart();
-			
+			motion_vertical = false;
+			//motion_horizontal = false;
 			if (keys.isKeyPressed(keys.W)) {
 				spr_pos.y -= speed * up_down_ratio;
-				motion_vertical = true;
+				motion_vertical = false;
 
 				//diver-diving
 			}
 			if (keys.isKeyPressed(keys.S)) {
 				spr_pos.y += speed * up_down_ratio;
-				motion_vertical = false;
+				motion_vertical = true;
 			}
 			if (keys.isKeyPressed(keys.A)) {
 				spr_pos.x -= speed * left_right_ratio;
@@ -92,13 +98,12 @@ int main()
 				spr_pos.x += speed * left_right_ratio;
 				motion_horizontal = false;
 			}
-			if (motion_vertical == false) {_sprite.setTexture(diver_diving);}
+			if (motion_vertical == true) {_sprite.setTexture(diver_diving);}
 			else {_sprite.setTexture(_tex);}
 
-			if (motion_horizontal == true) {_sprite.setTextureRect(sf::IntRect(256, 0, -256, 256));}
-			else {_sprite.setTextureRect(sf::IntRect(0, 0, 256, 256));}
+			flip = motion_horizontal;
 
-			if ((keys.isKeyPressed(keys.A) || keys.isKeyPressed(keys.D)) && motion_vertical == false) {_sprite.setTexture(diver_descent);}
+			if ((keys.isKeyPressed(keys.A) || keys.isKeyPressed(keys.D)) && motion_vertical) {_sprite.setTexture(diver_descent);}
 						
 			
 			sf::Mouse _mouse;
@@ -108,6 +113,25 @@ int main()
 			cursor.setPosition(mouse_pointer);
 			
 			window.setView(sf::View(_sprite.getPosition(), sf::Vector2f(v_width*1.5f, v_height*1.5f)));
+		}
+		if (animateClock.getElapsedTime().asSeconds() > 0.333f)
+		{
+			animateClock.restart();
+			if (animOffset == 0)
+				animOffset = 256;
+			else
+			{
+				animOffset = 0;
+			}
+		}
+		if (flip)
+		{
+			_sprite.setTextureRect(sf::IntRect(256 + animOffset, 0, -256, 256));
+
+		}
+		else
+		{
+			_sprite.setTextureRect(sf::IntRect(animOffset, 0, 256, 256));
 		}
 
 		
