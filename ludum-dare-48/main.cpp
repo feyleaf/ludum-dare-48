@@ -205,8 +205,8 @@ int main()
 
 				for (unsigned int c = 0; c < fishList.size(); c++)
 				{
-					unsigned int fishx = fishList[c].fishSprite.getPosition().x + fishList[c].motion.x;
-					unsigned int fishy = fishList[c].fishSprite.getPosition().y + fishList[c].motion.y;
+					unsigned int fishx = std::fabsf(fishList[c].fishSprite.getPosition().x + fishList[c].motion.x);
+					unsigned int fishy = std::fabsf(fishList[c].fishSprite.getPosition().y + fishList[c].motion.y);
 					if(!(backMask.getPixel(fishx, fishy) == sf::Color::Black))
 						fishList[c].fishSprite.move(scalar(0.5f, fishList[c].motion));
 				}
