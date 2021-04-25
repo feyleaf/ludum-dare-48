@@ -13,6 +13,12 @@ int main()
 	float tmpVel;
 	unsigned int gradient = 255;
 	int score = 0;
+	sf::Font font;
+	font.loadFromFile("fonts/font.ttf");
+	sf::Text scoreboard;
+	scoreboard.setFont(font);
+	scoreboard.setPosition(145.0f, 0.0f);
+	scoreboard.setString("Score: ");
 	
 	bool ascend = false;
 	bool motion_vertical = true;
@@ -27,26 +33,26 @@ int main()
 		game_clock.restart();
 	sf::Clock animateClock;
 		animateClock.restart();
-		sf::Clock fishClock;
+	sf::Clock fishClock;
 		fishClock.restart();
 	
 	sf::Vector2f mouse_pointer = sf::Vector2f(0, 0);
 	sf::Vector2f adjustedPosTop = sf::Vector2f(0, 0);
 	sf::Vector2f adjustedPosBottom = sf::Vector2f(0, 0);
+	sf::Image backMask;
 	sf::Texture _tex;
 	sf::Texture diver_diving;
 	sf::Texture diver_descent;
 	sf::Texture background;
-	sf::Image backMask;
 	sf::Texture goodFishTex;
 	sf::Texture badFishTex;
 	sf::Texture heartOutline;
 	sf::Texture heartFilling;
 	sf::Texture sailboatTex;
 	sf::Texture scrapTex;
-	scrapTex.loadFromFile("images/scrap-floating.png");
+		scrapTex.loadFromFile("images/scrap-floating.png");
 	sf::Texture debTex;
-	debTex.loadFromFile("images/debris.png");
+		debTex.loadFromFile("images/debris.png");
 	sf::Sprite bkSprite;
 	sf::Sprite _sprite;
 	struct fish {
@@ -213,6 +219,8 @@ int main()
 		window.draw(sailboat);
 			window.draw(_sprite);
 			window.setView(hudView);
+			scoreboard.setString("Scrap: " + sf::String(std::to_string(score)));
+			window.draw(scoreboard);
 			heartFilling.setSmooth(false);
 			heartLine.setPosition(sf::Vector2f(100.0f, 0.0f));
 			hearts.setPosition(sf::Vector2f(100.0f, 0.0f));
@@ -398,8 +406,8 @@ int main()
 		{
 			if (event.type == sf::Event::Closed)
 				window.close();
-			if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space)
-				sfxSound.play();
+			//if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space)
+			//	sfxSound.play();
 			if (event.type == sf::Event::Resized)
 			{
 				v_height = window.getSize().y;
@@ -407,14 +415,14 @@ int main()
 				gameView = sf::View(spr_pos, sf::Vector2f(v_width, v_height));
 				window.setView(gameView);
 			}
-			if (event.type == sf::Event::MouseMoved)
-			{
-				sf::Mouse _mouse;
-				sf::Vector2i _ipos = _mouse.getPosition(window);
-				sf::Vector2f _pos = sf::Vector2f(float(_ipos.x), float(_ipos.y));
-				mouse_pointer = (_pos + _sprite.getPosition() - sf::Vector2f(460.0f, 260.0f));
+			//if (event.type == sf::Event::MouseMoved)
+			//{
+			//	sf::Mouse _mouse;
+			//	sf::Vector2i _ipos = _mouse.getPosition(window);
+			//	sf::Vector2f _pos = sf::Vector2f(float(_ipos.x), float(_ipos.y));
+			//	mouse_pointer = (_pos + _sprite.getPosition() - sf::Vector2f(460.0f, 260.0f));
 				//cursor.setPosition(scalar(ratio*sizeScale, mouse_pointer));
-			}
+			//}
 			//window.draw(shape);
 			window.draw(bkSprite);
 			for (unsigned int c = 0; c < debrisList.size(); c++)
@@ -434,9 +442,12 @@ int main()
 			_sprite.setPosition(spr_pos);
 			window.draw(_sprite);
 			window.setView(hudView);
+			scoreboard.setString("Scrap: " + sf::String(std::to_string(score)));
+			window.draw(scoreboard);
+			heartFilling.setSmooth(false);
 			heartLine.setPosition(sf::Vector2f(100.0f, 0.0f));
 			hearts.setPosition(sf::Vector2f(100.0f, 0.0f));
-			hearts.move(sf::Vector2f(0.0f, -1.0f + (((100 - health) * 32) / 100.0f)));
+			hearts.move(sf::Vector2f(0.0f, (((100 - health) * 32) / 100.0f)));
 			window.draw(hearts);
 			window.draw(heartLine);
 			window.setView(gameView);
