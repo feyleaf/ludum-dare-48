@@ -5,13 +5,14 @@
 int main()
 {
 	//-------------"Global" variables----------------
-	srand(time(NULL));
+	srand(unsigned(time(NULL)));
 	int health = 100;
 	float speed = 3.0f; //default = 3.0f
 	float up_down_ratio = 0.5f;
 	float left_right_ratio = 0.8f;
 	float tmpVel;
 	unsigned int gradient = 255;
+	int score = 0;
 	
 	bool ascend = false;
 	bool motion_vertical = true;
@@ -41,6 +42,11 @@ int main()
 	sf::Texture badFishTex;
 	sf::Texture heartOutline;
 	sf::Texture heartFilling;
+	sf::Texture sailboatTex;
+	sf::Texture scrapTex;
+	scrapTex.loadFromFile("images/scrap-floating.png");
+	sf::Texture debTex;
+	debTex.loadFromFile("images/debris.png");
 	sf::Sprite bkSprite;
 	sf::Sprite _sprite;
 	struct fish {
@@ -48,9 +54,27 @@ int main()
 		sf::Vector2f motion;
 		bool badfish;
 	};
+	struct scrap {
+		sf::Sprite scrapSprite;
+		bool isActive;
+	};
+	struct debris {
+		sf::Sprite debrisSprite;
+		float amplitude;
+	};
 	std::vector<fish> fishList;
+	std::vector<scrap> scrapList;
+	std::vector<debris> debrisList;
 	sf::Sprite heartLine;
 	sf::Sprite hearts;
+	sf::Sprite sailboat;
+	sailboatTex.loadFromFile("images/sailboat.png");
+	sailboatTex.setSmooth(true);
+	sailboat.setTexture(sailboatTex);
+	sailboat.setOrigin(224, 418);
+	sailboat.setScale(sf::Vector2f(0.45f, 0.45f));
+	float boatsway = 0.0f;
+	sf::Clock boatclock;
 	heartOutline.loadFromFile("images/heart-outline.png");
 	heartLine.setTexture(heartOutline);
 	heartFilling.loadFromFile("images/heart-filling.png");
@@ -58,7 +82,7 @@ int main()
 	hearts.setPosition(sf::Vector2f(320.0f, 4.0f));
 	heartLine.setPosition(sf::Vector2f(320.0f, 4.0f));
 	//----------------------------------------
-	sf::View hudView = sf::View(sf::FloatRect(0, 0, g_width, 9 * g_width / 16));
+	sf::View hudView = sf::View(sf::FloatRect(0.0f, 0.0f,float(g_width), float(9 * g_width) / 16.0f));
 	sf::View gameView = hudView;
 	//Window init
 	
@@ -97,8 +121,8 @@ int main()
 			rn = (rand() % 10 + 10) / 70.0f;
 			tt.badfish = false;
 			do {
-				tmp.setPosition(rand() % background.getSize().x, rand() % (background.getSize().y-300) + 300);
-			} while (calcDist(spr_pos, tmp.getPosition()) < 400.0f || ((backMask.getPixel(unsigned int(tt.fishSprite.getPosition().x), unsigned int(tt.fishSprite.getPosition().y)) == sf::Color::Black)));
+				tmp.setPosition(rand() % background.getSize().x, rand() % (background.getSize().y-600) + 600);
+			} while ((calcDist(spr_pos, tmp.getPosition()) < 400.0f) || (backMask.getPixel(unsigned int(std::fabsf(tt.fishSprite.getPosition().x)/4.0f), unsigned int(std::fabsf(tt.fishSprite.getPosition().y))/4.0f) == sf::Color::Black));
 		}
 		else
 		{
@@ -107,7 +131,7 @@ int main()
 			tt.badfish = true;
 			do {
 				tmp.setPosition(rand() % background.getSize().x, rand() % background.getSize().y/2 + background.getSize().y/2);
-			} while (calcDist(spr_pos, tmp.getPosition()) < 400.0f || ((backMask.getPixel(unsigned int(tt.fishSprite.getPosition().x), unsigned int(tt.fishSprite.getPosition().y)) == sf::Color::Black)));
+			} while ((calcDist(spr_pos, tmp.getPosition()) < 400.0f) || (backMask.getPixel(unsigned int(std::fabsf(tt.fishSprite.getPosition().x)/4.0f), unsigned int(std::fabsf(tt.fishSprite.getPosition().y))/4.0f) == sf::Color::Black));
 		}
 		tmp.setScale(rn, rn);
 		tt.fishSprite = tmp;
@@ -123,6 +147,43 @@ int main()
 		}
 		fishList.push_back(tt);
 	}
+
+	//placing the scrap pieces
+	for (int i = 0; i < 360; i++)
+	{
+		scrap tt;
+		sf::Sprite tmp;
+		float rn = 0.0f;
+		tmp.setTexture(scrapTex);
+		rn = (rand() % 10 + 10) / 70.0f;
+		tt.isActive = true;
+		do {
+			tmp.setPosition(rand() % background.getSize().x, rand() % (background.getSize().y - 600) + 600);
+		} while ((calcDist(spr_pos, tmp.getPosition()) < 400.0f) || (backMask.getPixel(unsigned int(std::fabsf(tt.scrapSprite.getPosition().x) / 4.0f), unsigned int(std::fabsf(tt.scrapSprite.getPosition().y)) / 4.0f) == sf::Color::Black));
+		tmp.setScale(rn, rn);
+		tt.scrapSprite = tmp;
+		scrapList.push_back(tt);
+	}
+
+	for (int i = 0; i < 360; i++)
+	{
+		debris deb;
+		sf::Sprite tmp;
+		float rn = 0.0f;
+		tmp.setTexture(debTex);
+		rn = (rand() % 100 + 100) / 90.0f;
+		int op = rand() % 4;
+		tmp.setTextureRect(sf::IntRect(op * 64, 0, 64, 64));
+		tmp.setOrigin(sf::Vector2f(32.0f, 32.0f));
+		deb.amplitude = 2.0f * 1000.0f / float(rand() % 1000);
+		tmp.setPosition(rand() % background.getSize().x, rand() % (background.getSize().y - 600) + 600);
+		tmp.setColor(sf::Color(255, 255, 255, 78));
+		tmp.setScale(rn, rn);
+		deb.debrisSprite = tmp;
+		debrisList.push_back(deb);
+	}
+
+
 	sf::SoundBuffer sfxBuff;
 		sfxBuff.loadFromFile("sounds/coin.wav");
 	sf::Sound sfxSound;
@@ -133,12 +194,23 @@ int main()
 		window.clear(); //Init the window
 		sf::Event event;
 			window.draw(bkSprite);
-		for (unsigned int c = 0; c < fishList.size(); c++)
+			for (unsigned int c = 0; c < debrisList.size(); c++)
+			{
+				window.draw(debrisList[c].debrisSprite);
+			}
+			for (unsigned int c = 0; c < fishList.size(); c++)
 		{
 			window.draw(fishList[c].fishSprite);
 		}
+		for (unsigned int c = 0; c < scrapList.size(); c++)
+		{
+			if (scrapList[c].isActive)
+				window.draw(scrapList[c].scrapSprite);
+		}
 		_sprite.setScale(0.15f, 0.15f);
 		_sprite.setPosition(spr_pos);
+		sailboat.setPosition(sf::Vector2f(190.0, 590.0f));
+		window.draw(sailboat);
 			window.draw(_sprite);
 			window.setView(hudView);
 			heartFilling.setSmooth(false);
@@ -152,6 +224,12 @@ int main()
 		window.display();
 		if (game_clock.getElapsedTime().asSeconds() > 0.0125f)
 		{
+			boatsway = 2.0f * sinf(boatclock.getElapsedTime().asSeconds());
+			sailboat.setRotation(boatsway);
+			for (unsigned int c = 0; c < debrisList.size(); c++)
+			{
+				debrisList[c].debrisSprite.setRotation(boatsway*debrisList[c].amplitude);
+			}
 			game_clock.restart();//reset to 0
 			motion_vertical = false; //reset to false when the loop cycles
 			ascend = false;
@@ -179,6 +257,8 @@ int main()
 							{
 								float theta = (2 * PI) * (float(rand() % 360) / 360.0f);
 								fishList[c].motion = unitVector(theta);
+								if (scalar(50.0f, unitVector(theta)).y < 560.0f)
+									fishList[c].motion = scalar(-1.0f, unitVector(theta));
 							}
 							else
 							{
@@ -188,6 +268,8 @@ int main()
 								{
 									float theta = (2 * PI) * (float(rand() % 360) / 360.0f);
 									fishList[c].motion = unitVector(theta);
+									if (scalar(50.0f, unitVector(theta)).y < 560.0f)
+										fishList[c].motion = scalar(-1.0f, unitVector(theta));
 
 								}
 							}
@@ -205,15 +287,17 @@ int main()
 
 				for (unsigned int c = 0; c < fishList.size(); c++)
 				{
-					unsigned int fishx = std::fabsf(fishList[c].fishSprite.getPosition().x + fishList[c].motion.x);
-					unsigned int fishy = std::fabsf(fishList[c].fishSprite.getPosition().y + fishList[c].motion.y);
-					if(!(backMask.getPixel(fishx, fishy) == sf::Color::Black))
+					//unsigned int fishx = unsigned int(std::fabsf(fishList[c].fishSprite.getPosition().x + fishList[c].motion.x)/4.0f);
+					//unsigned int fishy = unsigned int(std::fabsf(fishList[c].fishSprite.getPosition().y + fishList[c].motion.y)/4.0f);
+					//if (!(backMask.getPixel(fishx, fishy) == sf::Color::Black))
 						fishList[c].fishSprite.move(scalar(0.5f, fishList[c].motion));
+					//else
+					//	fishList[c].fishSprite.move(scalar(-1.0f, fishList[c].motion));
 				}
 			if (up) {
 				ascend = (!(left || right || down));
 				tmpVel= speed * up_down_ratio;
-				if (spr_pos.y - tmpVel > 560 && !(backMask.getPixel(unsigned int(spr_pos.x), unsigned int(spr_pos.y - tmpVel)) == sf::Color::Black))
+				if (spr_pos.y - tmpVel > 560 && !(backMask.getPixel(unsigned int(spr_pos.x/4.0f), unsigned int(spr_pos.y - tmpVel)/4) == sf::Color::Black))
 				{
 					spr_pos.y -= tmpVel;
 					motion_vertical = false;
@@ -221,7 +305,7 @@ int main()
 			}
 			if (down) {
 				tmpVel = speed * up_down_ratio;
-				if ((spr_pos.y + tmpVel < background.getSize().y-32) && !(backMask.getPixel(unsigned int(spr_pos.x), unsigned int(spr_pos.y+tmpVel))==sf::Color::Black))
+				if ((spr_pos.y + tmpVel < background.getSize().y-32) && !(backMask.getPixel(unsigned int(spr_pos.x/4.0f), unsigned int(spr_pos.y+tmpVel)/4)==sf::Color::Black))
 				{
 					spr_pos.y += tmpVel;
 					motion_vertical = true;
@@ -229,14 +313,14 @@ int main()
 			}
 			if (left) {
 				tmpVel=speed * left_right_ratio;
-				if (spr_pos.x - tmpVel > 32 && !(backMask.getPixel(unsigned int(spr_pos.x -tmpVel), unsigned int(spr_pos.y)) == sf::Color::Black)) {
+				if (spr_pos.x - tmpVel > 32 && !(backMask.getPixel(unsigned int(spr_pos.x -tmpVel)/4, unsigned int(spr_pos.y/4.0f)) == sf::Color::Black)) {
 					spr_pos.x -= tmpVel;
 					motion_horizontal = true;
 				}
 			}
 			if (right) {
 				tmpVel=speed * left_right_ratio;
-				if (spr_pos.x + tmpVel < background.getSize().x-32 && !(backMask.getPixel(unsigned int(spr_pos.x +tmpVel), unsigned int(spr_pos.y)) == sf::Color::Black))
+				if (spr_pos.x + tmpVel < background.getSize().x-32 && !(backMask.getPixel(unsigned int(spr_pos.x +tmpVel)/4, unsigned int(spr_pos.y/4.0f)) == sf::Color::Black))
 				{
 					spr_pos.x += tmpVel;
 					motion_horizontal = false;
@@ -265,7 +349,7 @@ int main()
 				adjCenter.y = adjustedPosTop.y;
 			if (spr_pos.y > adjustedPosBottom.y)
 				adjCenter.y = adjustedPosBottom.y;
-			gameView = sf::View(adjCenter, sf::Vector2f(v_width, v_height));
+			gameView = sf::View(adjCenter, sf::Vector2f(float(v_width), float(v_height)));
 			window.setView(gameView);
 			
 		}
@@ -291,9 +375,20 @@ int main()
 			{
 				bkSprite.setColor(sf::Color::Red);
 				health -= 1;
-				hearts.setTextureRect(sf::IntRect(0,((100-health)*32)/100, 32, (health * 32)/100));
+				hearts.setTextureRect(sf::IntRect(0, ((100 - health) * 32) / 100, 32, (health * 32) / 100));
 				//hearts.move(sf::Vector2f(0.0f, ((100 - health) * 32) / 100.0f));
 				spr_pos.x -= 30;
+
+			}
+		}
+
+		for (unsigned int c = 0; c < scrapList.size(); c++)
+		{
+			if (scrapList[c].scrapSprite.getGlobalBounds().intersects(_sprite.getGlobalBounds()) && scrapList[c].isActive)
+			{
+				score++;
+				sfxSound.play();
+				scrapList[c].isActive = false;
 
 			}
 		}
@@ -322,6 +417,20 @@ int main()
 			}
 			//window.draw(shape);
 			window.draw(bkSprite);
+			for (unsigned int c = 0; c < debrisList.size(); c++)
+			{
+				window.draw(debrisList[c].debrisSprite);
+			}
+			for (unsigned int c = 0; c < fishList.size(); c++)
+			{
+				window.draw(fishList[c].fishSprite);
+			}
+			for (unsigned int c = 0; c < scrapList.size(); c++)
+			{
+				if (scrapList[c].isActive)
+					window.draw(scrapList[c].scrapSprite);
+			}
+			window.draw(sailboat);
 			_sprite.setPosition(spr_pos);
 			window.draw(_sprite);
 			window.setView(hudView);
