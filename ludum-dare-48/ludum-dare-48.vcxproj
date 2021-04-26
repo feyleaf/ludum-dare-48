@@ -82,6 +82,7 @@
     <Link>
       <AdditionalLibraryDirectories>"C:\SFML-2.5.1\lib"</AdditionalLibraryDirectories>
       <AdditionalDependencies>"C:\SFML-2.5.1\lib\sfml-window-s-d.lib";sfml-main-d.lib;sfml-audio-s-d.lib;sfml-graphics-s-d.lib;sfml-system-s-d.lib;opengl32.lib;winmm.lib;gdi32.lib;openal32.lib;flac.lib;ogg.lib;vorbis.lib;vorbisenc.lib;vorbisfile.lib;freetype.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

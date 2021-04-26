@@ -57,6 +57,11 @@ int main()
 
 	sf::Image backMask;
 
+	sf::Music backgroundMusic;
+	backgroundMusic.openFromFile("sounds/fluid-courage.ogg");
+	backgroundMusic.setLoop(true);
+	backgroundMusic.setVolume(4.0f);
+
 	sf::Texture _tex;
 	sf::Texture diver_diving;
 	sf::Texture diver_descent;
@@ -447,7 +452,7 @@ int main()
 			if (questText == 4)
 			{
 				scrapGoal = 80;
-				mainmessage.setString("With 80 more scrap, I can build a better ship.");
+				mainmessage.setString("With 80 more scrap, I can repair my broken ship.");
 				if (score >= scrapGoal)
 				{
 					mainmessage.setString("I can return to my boat and add some upgrades now.");
@@ -499,6 +504,7 @@ int main()
 						lootList[i].burstForce = sf::Vector2f(0.0f, 0.0f);
 					lootList[i].burstForce = scalar(0.94f, lootList[i].burstForce);
 					lootList[i].shinySprite.move(lootList[i].burstForce);
+					lootList[i].shinySprite.move(sf::Vector2f(0.0f, 0.022f));
 				}
 			}
 
@@ -698,7 +704,7 @@ int main()
 				if (lootList[c].shinySprite.getGlobalBounds().intersects(_sprite.getGlobalBounds()) && lootList[c].isActive)
 				{
 					score++;
-					sfxSound.play();
+					if(score%25==0) sfxSound.play();
 					lootList[c].isActive = false;
 
 				}
@@ -712,9 +718,20 @@ int main()
 				if (event.type == sf::Event::Closed)
 					window.close();
 				if (event.type == sf::Event::KeyPressed)
-					startGame = false;
-				//if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space)
-				//	unlockTreasure = true;
+				{
+					if (startGame)
+					{
+						startGame = false;
+						backgroundMusic.play();
+					}
+				}
+				if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::P)
+				{
+					if (backgroundMusic.getStatus() == sf::Music::Playing)
+						backgroundMusic.pause();
+					else
+						backgroundMusic.play();
+				}
 				if (event.type == sf::Event::Resized)
 				{
 					v_height = window.getSize().y;
