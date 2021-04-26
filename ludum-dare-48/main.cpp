@@ -7,27 +7,53 @@ int main()
 	//-------------"Global" variables----------------
 	srand(unsigned(time(NULL)));
 	int health = 100;
-	float speed = 3.0f; //default = 3.0f
-	float up_down_ratio = 0.5f;
-	float left_right_ratio = 0.8f;
-	float tmpVel;
-	unsigned int gradient = 255;
-	int score = 0;
-	sf::Font font;
-	font.loadFromFile("fonts/font.ttf");
-	sf::Text scoreboard;
-	scoreboard.setFont(font);
-	scoreboard.setPosition(145.0f, 0.0f);
-	scoreboard.setString("Score: ");
-	
+	int oxygen = 100;
+	int score = 400;
+	int scrapGoal = 30;
+	int depthLimit = 12800+75;
+	int questText = 0; //0-5?
+	bool showDepthMessage = false;
 	bool ascend = false;
 	bool motion_vertical = true;
 	bool motion_horizontal = false;
 	bool flip = false;
+	float speed = 13.0f; //default = 3.0f
+	float up_down_ratio = 0.5f;
+	float left_right_ratio = 0.8f;
+	float tmpVel;
+	float boatsway = 0.0f;
+	unsigned int gradient = 255;
+
 	unsigned int animOffset = 0;
 	unsigned int g_width = 600;
 	unsigned int v_width = g_width;
 	unsigned int v_height = 9 * v_width / 16;
+	sf::Font font;
+	font.loadFromFile("fonts/font.ttf");
+	sf::Text scoreboard;
+	sf::Text mainmessage;
+	sf::Text depthmessage;
+	scoreboard.setFont(font);
+	scoreboard.setPosition(145.0f, 0.0f);
+	scoreboard.setString("Score: ");
+	scoreboard.setScale(sf::Vector2f(0.75f, 0.75f));
+	mainmessage.setFont(font);
+	mainmessage.setPosition(70.0f, 300.0f);
+	mainmessage.setString("Return to the boat to upgrade my gear using scrap.");
+	mainmessage.setScale(sf::Vector2f(0.5f, 0.5f));
+	depthmessage.setFont(font);
+	depthmessage.setPosition(70.0f, 285.0f);
+	depthmessage.setString("My scuba gear cannot let me travel deeper yet.");
+	//more oxygen
+	//faster flippers
+	//"I can upgrade my scuba gear with n scrap"
+	//"If I find more scrap I can make another oxygen tank"
+	//"If I find n scrap I can build faster flippers"
+	//--//"If I find n scrap I can build a better boat"
+	//"I think I found something valuable at the ocean floor(END GAME)"
+	depthmessage.setScale(sf::Vector2f(0.5f, 0.5f));
+
+	
 	sf::Keyboard keys;
 	sf::Clock game_clock;
 		game_clock.restart();
@@ -44,16 +70,21 @@ int main()
 	sf::Texture diver_diving;
 	sf::Texture diver_descent;
 	sf::Texture background;
+	sf::Texture foreground;
 	sf::Texture goodFishTex;
 	sf::Texture badFishTex;
 	sf::Texture heartOutline;
 	sf::Texture heartFilling;
+	sf::Texture bubbleOutline;
+	sf::Texture bubbleFilling;
 	sf::Texture sailboatTex;
 	sf::Texture scrapTex;
-		scrapTex.loadFromFile("images/scrap-floating.png");
 	sf::Texture debTex;
-		debTex.loadFromFile("images/debris.png");
+	sf::Texture treasureChestBase;
+	sf::Texture treasureChestLid;
+	sf::Texture loot;
 	sf::Sprite bkSprite;
+	sf::Sprite fgSprite;
 	sf::Sprite _sprite;
 	struct fish {
 		sf::Sprite fishSprite;
@@ -68,47 +99,85 @@ int main()
 		sf::Sprite debrisSprite;
 		float amplitude;
 	};
+	struct shiny {
+		sf::Sprite shinySprite;
+		sf::Vector2f burstForce;
+	};
+
 	std::vector<fish> fishList;
 	std::vector<scrap> scrapList;
 	std::vector<debris> debrisList;
 	sf::Sprite heartLine;
 	sf::Sprite hearts;
+	sf::Sprite airLine;
+	sf::Sprite air;
 	sf::Sprite sailboat;
-	sailboatTex.loadFromFile("images/sailboat.png");
-	sailboatTex.setSmooth(true);
-	sailboat.setTexture(sailboatTex);
-	sailboat.setOrigin(224, 418);
-	sailboat.setScale(sf::Vector2f(0.45f, 0.45f));
-	float boatsway = 0.0f;
 	sf::Clock boatclock;
-	heartOutline.loadFromFile("images/heart-outline.png");
-	heartLine.setTexture(heartOutline);
-	heartFilling.loadFromFile("images/heart-filling.png");
-	hearts.setTexture(heartFilling);
+	sf::Sprite treasureBase;
+	sf::Sprite treasureLid;
+	sf::Vector2f treasurePop = sf::Vector2f(4.0f, 24.0f);
+	bool unlockTreasure = false;
+	
+	
+	
+	
 	hearts.setPosition(sf::Vector2f(320.0f, 4.0f));
 	heartLine.setPosition(sf::Vector2f(320.0f, 4.0f));
+	scrapTex.loadFromFile("images/scrap-floating.png");
+	debTex.loadFromFile("images/debris.png");
+	sailboatTex.loadFromFile("images/sailboat.png");
+	heartOutline.loadFromFile("images/heart-outline.png");
+	heartFilling.loadFromFile("images/heart-filling.png");
+	bubbleOutline.loadFromFile("images/bubble-outline.png");
+	bubbleFilling.loadFromFile("images/bubble-filling.png");
+	treasureChestBase.loadFromFile("images/treasure-base.png");
+	treasureChestLid.loadFromFile("images/treasure-lid.png");
+	loot.loadFromFile("images/treasure.png");
+
+	sailboat.setTexture(sailboatTex);
+	heartLine.setTexture(heartOutline);
+	hearts.setTexture(heartFilling);
+	airLine.setTexture(bubbleOutline);
+	air.setTexture(bubbleFilling);
+	air.setPosition(sf::Vector2f(260.0f, 4.0f));
+	airLine.setPosition(sf::Vector2f(260.0f, 4.0f));
+	sailboatTex.setSmooth(true);
+	sailboat.setOrigin(224, 418);
+	sailboat.setScale(sf::Vector2f(0.45f, 0.45f));
+
+	treasureBase.setTexture(treasureChestBase);
+	treasureBase.setPosition(3663.0f, 7883.0f);
+	treasureLid.setTexture(treasureChestLid);
+	treasureLid.setPosition(3663.0f, 7883.0f);
+
+
+	//3663, 7903
+
+
+
 	//----------------------------------------
+	//Window init
 	sf::View hudView = sf::View(sf::FloatRect(0.0f, 0.0f,float(g_width), float(9 * g_width) / 16.0f));
 	sf::View gameView = hudView;
-	//Window init
-	
-	sf::RenderWindow window(sf::VideoMode(g_width, 9* g_width /16), "Drowning in the Deep");
-
+	sf::RenderWindow window(sf::VideoMode(g_width, 9* g_width /16), "An Unforgiving Sea");
 	sf::Vector2f boundingBox = { 0.0f, 0.0f };
-	//sf::CircleShape cursor(4.0f);
 	sf::CircleShape shape(50.0f);
 	
 	background.loadFromFile("images/tall-background-omg.png");
+	foreground.loadFromFile("images/tall-landmasses.png");
 	backMask.loadFromFile("images/tall-background-mask.png");
-		bkSprite.setTexture(background);
-	bkSprite.setPosition(sf::Vector2f(0.0f, 0.0f));
-	//cursor.setFillColor(sf::Color::Red);
 	_tex.loadFromFile("images/diver-underwater.png");
 	diver_diving.loadFromFile("images/diver-diving.png");
 	diver_descent.loadFromFile("images/diver-descent.png");
 	goodFishTex.loadFromFile("images/good-fish.png");
 	badFishTex.loadFromFile("images/bad-fish.png");
-
+	
+	bkSprite.setTexture(background);
+	fgSprite.setTexture(foreground);
+	
+	bkSprite.setPosition(sf::Vector2f(0.0f, 0.0f));
+	fgSprite.setPosition(sf::Vector2f(0.0f, 0.0f));
+	//cursor.setFillColor(sf::Color::Red);
 	_tex.setSmooth(false);
 	
 	_sprite.setOrigin(128.0f, 128.0f);
@@ -155,7 +224,7 @@ int main()
 	}
 
 	//placing the scrap pieces
-	for (int i = 0; i < 360; i++)
+	for (int i = 0; i < 460; i++)
 	{
 		scrap tt;
 		sf::Sprite tmp;
@@ -191,10 +260,14 @@ int main()
 
 
 	sf::SoundBuffer sfxBuff;
-		sfxBuff.loadFromFile("sounds/coin.wav");
+	sfxBuff.loadFromFile("sounds/coin.wav");
 	sf::Sound sfxSound;
-		sfxSound.setBuffer(sfxBuff);
-	
+	sfxSound.setBuffer(sfxBuff);
+	sf::SoundBuffer powerUpBuff;
+	powerUpBuff.loadFromFile("sounds/powerup.wav");
+	sf::Sound powerUp;
+	powerUp.setBuffer(powerUpBuff);
+
 	while (window.isOpen())//Main Game
 	{
 		window.clear(); //Init the window
@@ -216,17 +289,144 @@ int main()
 		_sprite.setScale(0.15f, 0.15f);
 		_sprite.setPosition(spr_pos);
 		sailboat.setPosition(sf::Vector2f(190.0, 590.0f));
+
+		if (questText == 0)
+		{
+			scrapGoal = 30;
+			mainmessage.setString("With 30 scrap, I can upgrade my scuba gear.");
+			if (score >= scrapGoal)
+			{
+				mainmessage.setString("I'll return to my boat and upgrade my scuba gear now.");
+				if (sailboat.getGlobalBounds().intersects(_sprite.getGlobalBounds()))
+				{
+					score -= scrapGoal;
+					questText++;
+					depthLimit += 2300;
+					powerUp.play();
+					showDepthMessage = false;
+					mainmessage.setString(" ");
+				}
+			}
+		}
+
+		if (questText == 1)
+		{
+			scrapGoal = 50;
+			mainmessage.setString("With 50 scrap, I can make faster flippers.");
+			if (score >= scrapGoal)
+			{
+				mainmessage.setString("I'll return to my boat and upgrade my flippers now.");
+				if (sailboat.getGlobalBounds().intersects(_sprite.getGlobalBounds()))
+				{
+					score -= scrapGoal;
+					questText++;
+					speed = 5.0f;
+					powerUp.play();
+					showDepthMessage = false;
+					mainmessage.setString(" ");
+				}
+			}
+		}
+
+		if (questText == 2)
+		{
+			scrapGoal = 50;
+			mainmessage.setString("With 50 more scrap, I can upgrade my oxygen tank.");
+			if (score >= scrapGoal)
+			{
+				mainmessage.setString("I'll return to my boat and upgrade my oxygen tank now.");
+				if (sailboat.getGlobalBounds().intersects(_sprite.getGlobalBounds()))
+				{
+					score -= scrapGoal;
+					questText++;
+					oxygen += 100;
+					powerUp.play();
+					showDepthMessage = false;
+					mainmessage.setString(" ");
+				}
+			}
+		}
+
+		if (questText == 3)
+		{
+			scrapGoal = 80;
+			mainmessage.setString("With 80 scrap, I can upgrade my scuba gear.");
+			if (score >= scrapGoal)
+			{
+				mainmessage.setString("I'll return to my boat and upgrade my scuba gear now.");
+				if (sailboat.getGlobalBounds().intersects(_sprite.getGlobalBounds()))
+				{
+					score -= scrapGoal;
+					questText++;
+					depthLimit += 2300;
+					powerUp.play();
+					showDepthMessage = false;
+					mainmessage.setString(" ");
+				}
+			}
+		}
+
+		if (questText == 4)
+		{
+			scrapGoal = 80;
+			mainmessage.setString("With 80 more scrap, I can build a better ship.");
+			if (score >= scrapGoal)
+			{
+				mainmessage.setString("I'll return to my boat and add some upgrades now.");
+				if (sailboat.getGlobalBounds().intersects(_sprite.getGlobalBounds()))
+				{
+					score -= scrapGoal;
+					questText++;
+					depthLimit += 2300;
+					powerUp.play();
+					showDepthMessage = false;
+					mainmessage.setString(" ");
+				}
+			}
+		}
+
+		if (questText == 5)
+		{
+			scrapGoal = 9999;
+			mainmessage.setString("I think there was a glint of something valuable on the ocean floor");
+			if (score >= scrapGoal)
+			{
+				mainmessage.setString(" ");
+				if (sailboat.getGlobalBounds().intersects(_sprite.getGlobalBounds()))
+				{
+					score -= scrapGoal;
+					questText++;
+					depthLimit += 2300;
+					powerUp.play();
+					showDepthMessage = false;
+					mainmessage.setString(" ");
+				}
+			}
+		}
+
+
 		window.draw(sailboat);
 			window.draw(_sprite);
+			window.draw(fgSprite);
+			window.draw(treasureBase);
+			window.draw(treasureLid);
 			window.setView(hudView);
 			scoreboard.setString("Scrap: " + sf::String(std::to_string(score)));
 			window.draw(scoreboard);
+			window.draw(mainmessage);
+			if (showDepthMessage) window.draw(depthmessage);
 			heartFilling.setSmooth(false);
 			heartLine.setPosition(sf::Vector2f(100.0f, 0.0f));
 			hearts.setPosition(sf::Vector2f(100.0f, 0.0f));
 			hearts.move(sf::Vector2f(0.0f, (((100 - health) * 32) / 100.0f)));
 			window.draw(hearts);
 			window.draw(heartLine);
+			bubbleFilling.setSmooth(false);
+			airLine.setPosition(sf::Vector2f(60.0f, 0.0f));
+			air.setPosition(sf::Vector2f(60.0f, 0.0f));
+			air.move(sf::Vector2f(0.0f, (((100 - oxygen) * 32) / 100.0f)));
+			window.draw(air);
+			window.draw(airLine);
 			window.setView(gameView);
 		//window.draw(cursor);
 		window.display();
@@ -248,8 +448,9 @@ int main()
 
 			//if (spr_pos.y > background.getSize().y * 0.5f) {
 				_sprite.setColor(sf::Color(gradient, gradient, gradient, 255));
-				bkSprite.setColor(sf::Color(192+gradient/4, 192+gradient/4, 192+gradient/4, 255));
-			//}
+				bkSprite.setColor(sf::Color(192 + gradient / 4, 192 + gradient / 4, 192 + gradient / 4, 255));
+				fgSprite.setColor(sf::Color(192 + gradient / 4, 192 + gradient / 4, 192 + gradient / 4, 255));
+				//}
 			//else {
 			//	_sprite.setColor(sf::Color::White);
 			//}
@@ -315,8 +516,15 @@ int main()
 				tmpVel = speed * up_down_ratio;
 				if ((spr_pos.y + tmpVel < background.getSize().y-32) && !(backMask.getPixel(unsigned int(spr_pos.x/4.0f), unsigned int(spr_pos.y+tmpVel)/4)==sf::Color::Black))
 				{
-					spr_pos.y += tmpVel;
-					motion_vertical = true;
+					if (spr_pos.y < float(depthLimit))
+					{
+						spr_pos.y += tmpVel;
+						motion_vertical = true;
+					}
+					else
+					{
+						showDepthMessage = true;
+					}
 				}
 			}
 			if (left) {
@@ -339,13 +547,6 @@ int main()
 			flip = motion_horizontal;
 
 			if ((left || right) && motion_vertical) {_sprite.setTexture(diver_descent);}
-			/*
-			sf::Mouse _mouse;
-			sf::Vector2i _ipos = _mouse.getPosition(window);
-			sf::Vector2f _pos = sf::Vector2f(float(_ipos.x), float(_ipos.y));
-			mouse_pointer = (_pos + _sprite.getPosition() - sf::Vector2f(460.0f, 260.0f));
-			cursor.setPosition(scalar(ratio*sizeScale, mouse_pointer));
-			*/
 			adjustedPosTop = sf::Vector2f(16+float(v_width) / 2.0f, 16+float(v_height) / 2.0f);
 			adjustedPosBottom = sf::Vector2f(background.getSize().x-float(v_width) / 2.0f-16, background.getSize().y-float(v_height) / 2.0f-16);
 			sf::Vector2f adjCenter = spr_pos;
@@ -384,7 +585,6 @@ int main()
 				bkSprite.setColor(sf::Color::Red);
 				health -= 1;
 				hearts.setTextureRect(sf::IntRect(0, ((100 - health) * 32) / 100, 32, (health * 32) / 100));
-				//hearts.move(sf::Vector2f(0.0f, ((100 - health) * 32) / 100.0f));
 				spr_pos.x -= 30;
 
 			}
@@ -441,15 +641,27 @@ int main()
 			window.draw(sailboat);
 			_sprite.setPosition(spr_pos);
 			window.draw(_sprite);
+			window.draw(fgSprite);
+			window.draw(treasureBase);
+			window.draw(treasureLid);
 			window.setView(hudView);
 			scoreboard.setString("Scrap: " + sf::String(std::to_string(score)));
 			window.draw(scoreboard);
+			window.draw(mainmessage);
+			if(showDepthMessage) window.draw(depthmessage);
+
 			heartFilling.setSmooth(false);
 			heartLine.setPosition(sf::Vector2f(100.0f, 0.0f));
 			hearts.setPosition(sf::Vector2f(100.0f, 0.0f));
 			hearts.move(sf::Vector2f(0.0f, (((100 - health) * 32) / 100.0f)));
 			window.draw(hearts);
 			window.draw(heartLine);
+			bubbleFilling.setSmooth(false);
+			airLine.setPosition(sf::Vector2f(60.0f, 0.0f));
+			air.setPosition(sf::Vector2f(60.0f, 0.0f));
+			air.move(sf::Vector2f(0.0f, (((100 - oxygen) * 32) / 100.0f)));
+			window.draw(air);
+			window.draw(airLine);
 			window.setView(gameView);
 			//window.draw(cursor);
 			window.display();
