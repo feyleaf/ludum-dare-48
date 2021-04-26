@@ -8,7 +8,7 @@ int main()
 	srand(unsigned(time(NULL)));
 	int health = 100;
 	int oxygen = 100;
-	int score = 400;
+	int score = 0;
 	int scrapGoal = 30;
 	int depthLimit = 2800+75;
 	int questText = 0; //0-5?
@@ -713,8 +713,8 @@ int main()
 					window.close();
 				if (event.type == sf::Event::KeyPressed)
 					startGame = false;
-				if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space)
-					unlockTreasure = true;
+				//if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space)
+				//	unlockTreasure = true;
 				if (event.type == sf::Event::Resized)
 				{
 					v_height = window.getSize().y;
